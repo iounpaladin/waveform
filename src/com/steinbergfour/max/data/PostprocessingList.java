@@ -1,4 +1,4 @@
 package com.steinbergfour.max.data;
 
-public class PostprocessingList {
+public class PostprocessingList  {
 }

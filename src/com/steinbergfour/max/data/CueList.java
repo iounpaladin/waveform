@@ -1,4 +1,7 @@
 package com.steinbergfour.max.data;
 
-public class CueList {
+import java.util.HashMap;
+
+public class CueList extends HashMap<String, Cue> {
+
 }

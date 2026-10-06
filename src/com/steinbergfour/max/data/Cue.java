@@ -1,4 +1,5 @@
 package com.steinbergfour.max.data;
 
-public class Cuew {
+public record Cue(String hotkey, String name, String reminder) {
+
 }

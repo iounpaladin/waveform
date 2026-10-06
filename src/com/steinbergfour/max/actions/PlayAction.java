@@ -1,4 +1,8 @@
 package com.steinbergfour.max.actions;
 
-public class AudioAction {
+public class PlayAction implements Actionable {
+    @Override
+    public void activate(Responder responder) {
+
+    }
 }

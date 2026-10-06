@@ -1,6 +1,4 @@
-package com.steinbergfour.max.sound;
-
-import com.steinbergfour.max.data.Cue;
+package com.steinbergfour.max.managers;
 
 import javax.sound.sampled.*;
 import java.io.File;

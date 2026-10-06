@@ -1,4 +1,6 @@
 package com.steinbergfour.max.data;
 
-public class ResourceList {
+import java.util.HashMap;
+
+public class ResourceList extends HashMap<String, Resource> {
 }
