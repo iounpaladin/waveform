@@ -72,7 +72,19 @@ public class Production {
 
             String reminder = ((Element) cue).getElementsByTagName("reminder").item(0).getTextContent();
 
-            Cue c = new Cue(hotkey, cueName, reminder);
+            // == actions ==
+            ActionList actionList = new ActionList();
+
+            var red = ((Element) cue).getElementsByTagName("actions").item(0).getAttributes().getNamedItem("reduce").getNodeValue().toUpperCase();
+            var actions = ((Element) cue).getElementsByTagName("action");
+
+            for (int j = 0; j < actions.getLength(); j++) {
+                var action = actions.item(j);
+
+                actionList.add(ActionFactory.fromXML(action));
+            }
+
+            Cue c = new Cue(hotkey, cueName, reminder, actionList, Cue.Reduction.valueOf(red));
 
             cl.put(id, c);
         }

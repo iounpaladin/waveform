@@ -1,5 +1,7 @@
 package com.steinbergfour.max.managers;
 
+import com.steinbergfour.max.actions.Responder;
+
 import javax.sound.sampled.*;
 import java.io.File;
 import java.io.IOException;
@@ -13,19 +15,37 @@ public class SoundManager {
         this.clips = new ArrayList<Clip>();
     }
 
-    public void play() throws LineUnavailableException, UnsupportedAudioFileException, IOException {
-        Clip clip = AudioSystem.getClip();
+    public void play(AudioInputStream ais, Responder completed)  {
+        final Clip clip;
+        try {
+            clip = AudioSystem.getClip();
+        } catch (LineUnavailableException e) {
+            return;
+            // ignored
+        }
         // getAudioInputStream() also accepts a File or InputStream
-        AudioInputStream ais = AudioSystem.getAudioInputStream(new File("C:\\Users\\maxss\\OneDrive\\Documents\\Audacity\\11-@loop.wav"));
-        clip.open(ais);
-        clip.loop(Clip.LOOP_CONTINUOUSLY);
+        try {
+            clip.open(ais);
+        } catch (Exception e) {
+            // ignored
+        }
+
+        clip.start();
+//        clip.loop(Clip.LOOP_CONTINUOUSLY);
+        clip.addLineListener(event -> {
+                if (event.getType() == LineEvent.Type.STOP) {
+                    completed.respond();
+                    clip.close();
+                    this.clips.remove(clip);
+                }
+        });
 
         this.clips.add(clip);
     }
 
     public void kill() {
         for(var clip : this.clips) {
-            clip.stop();
+            clip.close();
         }
     }
 }

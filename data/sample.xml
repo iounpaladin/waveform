@@ -12,6 +12,8 @@
                 <actions reduce="sequenced">
                     <action type="play" target="#1"/>
                     <action type="play" target="#2" preset="#1"/>
+                    <action type="play" target="#2" preset="#1"/>
+                    <action type="play" target="#2" preset="#1"/>
 <!--                    <action type="advance" target="@$"/>-->
                 </actions>
             </cue>
