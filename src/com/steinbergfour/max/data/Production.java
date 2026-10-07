@@ -91,6 +91,22 @@ public class Production {
 
         p.setCueList(cl);
 
+        // Resources
+        ResourceList rl = new ResourceList();
+        var resources = ((Element) data).getElementsByTagName("resource");
+        for (int idx = 0; idx < resources.getLength(); idx++) {
+            var resource = resources.item(idx);
+            var attr = resource.getAttributes();
+            var id =  attr.getNamedItem("id").getNodeValue();
+
+            Resource r = new Resource(
+                    id,
+                    attr.getNamedItem("href").getNodeValue()
+            );
+            rl.put(id, r);
+        }
+
+        p.setResourceList(rl);
 
         p.initialiseCueManager();
         return p;
@@ -102,6 +118,15 @@ public class Production {
 
     private void setCueList(CueList cl) {
         this.cues = cl;
+    }
+
+
+    public ResourceList getResourceList() {
+        return this.resources;
+    }
+
+    private void setResourceList(ResourceList cl) {
+        this.resources = cl;
     }
 
     public String getName() {

@@ -1,4 +1,4 @@
 package com.steinbergfour.max.data;
 
-public class Resource {
+public record Resource(String id, String href) {
 }

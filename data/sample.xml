@@ -10,11 +10,11 @@
             <cue hotkey="1" id="1" name="@2.1.B.1.1">
                 <reminder><![CDATA[Line 3 Scene 100 whatever]]></reminder>
                 <actions reduce="sequenced">
-                    <action type="play" target="01"/>
-                    <action type="play" target="02" preset="#1"/>
-                    <action type="play" target="03" preset="#1"/>
-                    <action type="play" target="04" preset="#1"/>
-<!--                    <action type="advance" target="@$"/>-->
+                    <action type="play" target="01" preset="#1"/>
+                    <action type="play" target="02" preset="#2"/>
+                    <action type="play" target="03" preset="#2"/>
+                    <action type="play" target="04" preset="#2"/>
+                    <action type="play" target="05" preset="#3"/>
                 </actions>
             </cue>
 
@@ -25,16 +25,29 @@
                 </actions>
             </cue>
         </cues>
-        <resources>
-            <resource id="1" href="test.mp3"/>
-            <resource id="1" href="test2.mp3"/>
+        <resources> <!-- uncompressed data only, e.g. wav -->
+            <resource id="01" href="data\100hz.wav"/>
+            <resource id="02" href="data\250hz.wav"/>
+            <resource id="03" href="data\440hz.wav"/>
+            <resource id="04" href="data\1khz.wav"/>
+            <resource id="05" href="data\10khz.wav"/>
         </resources>
         <postprocessing>
             <filters>
-
+                <filter id="1">
+                    <fader startKey="0" endKey="1000" keyframe="volume" startValue="1" endValue="0.75" type="cubic"/>
+                </filter>
+                <filter id="2">
+                    <volume value="0.75"/>
+                    <trim start="1000"/> <!-- unit is ms, if `start` or `end` are absent they are assumed to be the start/end of the track -->
+                </filter>
+                <filter id="3">
+                    <peq/>
+                </filter>
             </filters>
             <presets>
-
+                <preset id="1" filters="1"/>
+                <preset id="2" filters="2;3"/>
             </presets>
         </postprocessing>
     </data>

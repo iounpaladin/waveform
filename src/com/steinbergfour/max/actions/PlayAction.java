@@ -44,13 +44,21 @@ public class PlayAction implements Actionable {
     @Override
     public void activate(Responder responder) {
         System.out.println(this.target);
-        AudioInputStream ais;
-        try(var str = Files.newDirectoryStream(Paths.get("C:\\Users\\maxss\\OneDrive\\Documents\\Audacity"), this.target + "-*.wav");) {
-            var path = str.iterator().next();
-            ais = AudioSystem.getAudioInputStream(path.toFile());
+//        AudioInputStream ais;
+//        try(var str = Files.newDirectoryStream(Paths.get("C:\\Users\\maxss\\OneDrive\\Documents\\Audacity"), this.target + "-*.wav");) {
+//            var path = str.iterator().next();
+//            ais = AudioSystem.getAudioInputStream(path.toFile());
+//        } catch (Exception e) {
+//            throw new RuntimeException(e);
+//        }
+        try {
+            CueManager.CachedData data = CueManager.singleton.getCache(this.target);
+            AudioInputStream ais = new AudioInputStream(
+                    new ByteArrayInputStream(data.data()), data.fmt(), data.length()
+            );
+            CueManager.singleton.getSoundManager().play(ais, responder);
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            e.printStackTrace();
         }
-        CueManager.singleton.getSoundManager().play(ais, responder);
     }
 }

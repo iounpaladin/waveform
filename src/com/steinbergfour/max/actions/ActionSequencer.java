@@ -24,6 +24,7 @@ public class ActionSequencer {
     }
 
     private void next() {
+        System.out.println(System.currentTimeMillis());
         if (index >= al.size()) return;
         var action = al.get(index);
         index++;
