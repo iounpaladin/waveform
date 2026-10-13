@@ -15,7 +15,7 @@ public class SoundManager {
         this.clips = new ArrayList<Clip>();
     }
 
-    public void play(AudioInputStream ais, Responder completed)  {
+    public void fireAndForget(AudioInputStream ais, Responder completed)  {
         final Clip clip;
         try {
             clip = AudioSystem.getClip();
@@ -36,11 +36,11 @@ public class SoundManager {
                 if (event.getType() == LineEvent.Type.STOP) {
                     completed.respond();
                     clip.close();
-                    this.clips.remove(clip);
+//                    this.clips.remove(clip);
                 }
         });
 
-        this.clips.add(clip);
+//        this.clips.add(clip);
     }
 
     public void kill() {

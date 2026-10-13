@@ -56,7 +56,7 @@ public class PlayAction implements Actionable {
             AudioInputStream ais = new AudioInputStream(
                     new ByteArrayInputStream(data.data()), data.fmt(), data.length()
             );
-            CueManager.singleton.getSoundManager().play(ais, responder);
+            CueManager.singleton.getSoundManager().fireAndForget(ais, responder);
         } catch (Exception e) {
             e.printStackTrace();
         }
