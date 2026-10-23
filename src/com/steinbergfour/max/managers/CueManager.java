@@ -25,6 +25,17 @@ public class CueManager {
     private final ResourceList rl;
     private final PostprocessingList pl;
     private final HashMap<String, CachedData> cache;
+    public static final AudioFormat targetFormat;
+
+    static {
+        targetFormat = new AudioFormat(
+                44100f,
+                16,
+                2,
+                true,
+                false
+        );
+    }
 
     public static record CachedData(byte[] data, AudioFormat fmt, long length) {
 
@@ -53,12 +64,14 @@ public class CueManager {
             var resource = rl.get(resourceName);
             try {
                 AudioInputStream ais = AudioSystem.getAudioInputStream(
+//                        targetFormat,
                         Paths.get(resource.href()).toAbsolutePath().toFile()
                 );
-                byte[] data = ais.readAllBytes();
+                AudioInputStream aisConverted = AudioSystem.getAudioInputStream(targetFormat, ais);
+                byte[] data = aisConverted.readAllBytes();
                 cache.put(
                         resourceName,
-                        new CachedData(data, ais.getFormat(), ais.getFrameLength())
+                        new CachedData(data, aisConverted.getFormat(), aisConverted.getFrameLength())
                 );
                 System.out.printf("%s=%s successfully initialised\n", resourceName, resource.href());
             } catch (Exception e) {
