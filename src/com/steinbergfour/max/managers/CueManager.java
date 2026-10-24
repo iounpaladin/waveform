@@ -1,16 +1,12 @@
 package com.steinbergfour.max.managers;
 
 import com.steinbergfour.max.actions.ActionSequencer;
-import com.steinbergfour.max.actions.Actionable;
-import com.steinbergfour.max.actions.Responder;
 import com.steinbergfour.max.data.*;
 import org.jetbrains.annotations.NotNull;
 
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
-import java.awt.*;
-import java.io.File;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.concurrent.CompletableFuture;
@@ -21,9 +17,10 @@ import java.util.concurrent.CompletableFuture;
 public class CueManager {
     private final SoundManager mgr;
     public static CueManager singleton;
-    private final CueList cl;
-    private final ResourceList rl;
-    private final PostprocessingList pl;
+    private final CueList cueList;
+    private final ResourceList resourceList;
+    private final ProcessingList processingList;
+    private final CompositionList compositionList;
     private final HashMap<String, CachedData> cache;
     public static final AudioFormat targetFormat;
 
@@ -41,15 +38,16 @@ public class CueManager {
 
     }
 
-    public CueManager(CueList cl, ResourceList rl, PostprocessingList pl) {
-        this(cl, rl, pl, true);
+    public CueManager(CueList cueList, ResourceList resourceList, ProcessingList processingList, CompositionList compositionList) {
+        this(cueList, resourceList, processingList, compositionList, true);
     }
 
-    public CueManager(CueList cl, ResourceList rl, PostprocessingList ppl, boolean preload) {
+    public CueManager(CueList cueList, ResourceList resourceList, ProcessingList processingList, CompositionList compositionList, boolean preload) {
         this.mgr = new SoundManager();
-        this.cl = cl;
-        this.rl = rl;
-        this.pl = ppl;
+        this.cueList = cueList;
+        this.resourceList = resourceList;
+        this.processingList = processingList;
+        this.compositionList = compositionList;
         if (singleton != null) {
             throw new RuntimeException("singleton");
         }
@@ -60,8 +58,12 @@ public class CueManager {
 
     public void preloadResources() {
         // resources !!!
-        for (var resourceName : rl.keySet()) {
-            var resource = rl.get(resourceName);
+
+        // todo: create compositions and apply filters
+        // also need to rename/restructure some stuff in the data
+        System.out.println("== Resource Initialisation ==");
+        for (var resourceName : resourceList.keySet()) {
+            var resource = resourceList.get(resourceName);
             try {
                 AudioInputStream ais = AudioSystem.getAudioInputStream(
 //                        targetFormat,
@@ -79,6 +81,10 @@ public class CueManager {
                 e.printStackTrace();
             }
         }
+
+        System.out.println("== Composition Initialisation ==");
+
+        System.out.println(this.compositionList.keySet());
     }
 
     public void trigger(@NotNull Cue c) {

@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class SoundManager {
+    // todo: revamp this class
     private List<Clip> clips;
 
     public SoundManager() {
@@ -32,6 +33,7 @@ public class SoundManager {
 
         clip.start();
 //        clip.loop(Clip.LOOP_CONTINUOUSLY);
+        // todo: loop potential
         clip.addLineListener(event -> {
                 if (event.getType() == LineEvent.Type.STOP) {
                     completed.respond();

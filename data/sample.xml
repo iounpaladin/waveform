@@ -9,7 +9,7 @@
         <cues>
             <cue hotkey="1" id="1" name="@2.1.B.1.1">
                 <reminder><![CDATA[Line 3 Scene 100 whatever]]></reminder>
-                <actions reduce="sequenced">
+                <actions reduce="simultaneous">
                     <action type="play" target="#01"/>
                 </actions>
             </cue>
@@ -30,34 +30,18 @@
         </resources>
         <compositions>
             <composition id="#01">
-                <sample type="play" target="01" preset="#1"/>
-                <sample type="play" target="02" preset=""/>
-                <sample type="play" target="03" preset=""/>
-                <sample type="play" target="04" preset=""/>
-                <sample type="play" target="05" preset="#3"/>
+                <sample type="play" target="01" filters="1"/>
+                <sample type="play" target="02" filters=""/>
+                <sample type="play" target="03" filters=""/>
+                <sample type="play" target="04" filters=""/>
+                <sample type="play" target="05" filters="4"/>
             </composition>
         </compositions>
-        <postprocessing>
+        <processing>
             <filters>
-                <filter id="1">
-                    <fader startKey="-1000" endKey="-0" keyframe="volume" startValue="1" endValue="0.75" type="cubic"/>
-                </filter>
-                <filter id="2">
-                    <volume value="0.75"/>
-                    <trim start="1000"/> <!-- unit is ms, if `start` or `end` are absent they are assumed to be the start/end of the track -->
-                </filter>
-                <filter id="3">
-                    <peq/>
-                </filter>
-                <filter id="4">
-                    <fader startKey="0" endKey="1000" keyframe="volume" startValue="0.75" endValue="1" type="cubic"/>
-                </filter>
+                <filter id="1" type="fader" startKey="-1000" endKey="-0" keyframe="volume" startValue="1" endValue="0.75" fadeType="cubic"/>
+                <filter id="4" type="fader" startKey="0" endKey="1000" keyframe="volume" startValue="0.75" endValue="1" fadeType="cubic" />
             </filters>
-            <presets>
-                <preset id="1" filters="1"/>
-                <preset id="2" filters="2;3"/>
-                <preset id="3" filters="4"/>
-            </presets>
-        </postprocessing>
+        </processing>
     </data>
 </production>

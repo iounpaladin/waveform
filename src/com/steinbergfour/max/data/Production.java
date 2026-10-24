@@ -1,7 +1,7 @@
 package com.steinbergfour.max.data;
 
 import com.steinbergfour.max.managers.CueManager;
-import com.steinbergfour.max.managers.SoundManager;
+import org.jetbrains.annotations.NotNull;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.xml.sax.SAXException;
@@ -11,12 +11,15 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.LinkedList;
 
 public class Production {
     private String name;
     private ResourceList resources;
     private CueList cues;
-    private PostprocessingList ppl;
+    private ProcessingList processingList;
+    private CompositionList compositionList;
     private CueManager cueManager;
     private boolean initialisedCueManager;
     // midi list tbd
@@ -32,7 +35,7 @@ public class Production {
         if (this.initialisedCueManager) {
             throw new ProductionException("");
         }
-        this.cueManager = new CueManager(this.cues, this.resources, this.ppl);
+        this.cueManager = new CueManager(this.cues, this.resources, this.processingList, this.compositionList);
         this.initialisedCueManager = true;
     }
 
@@ -92,12 +95,30 @@ public class Production {
         p.setCueList(cl);
 
         // Resources
+        ResourceList rl = getResourceList((Element) data);
+
+        p.setResourceList(rl);
+
+        // Processing
+        ProcessingList pl = getProcessingList((Element) data);
+        p.setProcessingList(pl);
+
+        // Compositions
+        CompositionList compList = getCompositionList((Element) data);
+        p.setCompositionList(compList);
+
+
+        p.initialiseCueManager();
+        return p;
+    }
+
+    private static @NotNull ResourceList getResourceList(Element data) {
         ResourceList rl = new ResourceList();
-        var resources = ((Element) data).getElementsByTagName("resource");
+        var resources = data.getElementsByTagName("resource");
         for (int idx = 0; idx < resources.getLength(); idx++) {
             var resource = resources.item(idx);
             var attr = resource.getAttributes();
-            var id =  attr.getNamedItem("id").getNodeValue();
+            var id = attr.getNamedItem("id").getNodeValue();
 
             Resource r = new Resource(
                     id,
@@ -105,11 +126,71 @@ public class Production {
             );
             rl.put(id, r);
         }
+        return rl;
+    }
 
-        p.setResourceList(rl);
+    private static @NotNull ProcessingList getProcessingList(Element data) {
+        ProcessingList processingList = new ProcessingList();
+        var filters = ((Element) data).getElementsByTagName("filter");
+        for (int idx = 0; idx < filters.getLength(); idx++) {
+            var filter = filters.item(idx);
+            var attr = filter.getAttributes();
+            String id = attr.getNamedItem("id").getNodeValue();
+            String type = attr.getNamedItem("type").getNodeValue();
 
-        p.initialiseCueManager();
-        return p;
+            HashMap<String, String> params = new HashMap<>();
+
+            for (int j = 0; j < attr.getLength(); j++) {
+                var param = attr.item(j);
+                var key = param.getNodeName();
+                var value = param.getNodeValue();
+
+                if (!key.equals("id") && !key.equals("type")) {
+                    params.put(key, value);
+                }
+            }
+
+            // put params
+
+            Processing processing = new Processing(id, type, params);
+
+            processingList.put(id, processing);
+        }
+        return processingList;
+    }
+
+    private static @NotNull CompositionList getCompositionList(Element data) {
+        CompositionList compositionList = new CompositionList();
+        var compositions = ((Element) data).getElementsByTagName("composition");
+        for (int idx = 0; idx < compositions.getLength(); idx++) {
+            var composition = compositions.item(idx);
+            var attr = composition.getAttributes();
+            var id = attr.getNamedItem("id").getNodeValue();
+
+            var samples = ((Element) composition).getElementsByTagName("sample");
+            var sampleList = new LinkedList<Sample>();
+
+            for (int j = 0; j < samples.getLength(); j++) {
+                var sample =  samples.item(j);
+                String type = sample.getAttributes().getNamedItem("type").getNodeValue();
+                String target = sample.getAttributes().getNamedItem("target").getNodeValue();
+                String filters = sample.getAttributes().getNamedItem("filters").getNodeValue();
+                Sample sampleData = new Sample(
+                        type, target, filters
+                );
+
+                sampleList.add(sampleData);
+            }
+
+            Composition c = new Composition(
+                    id,
+                    sampleList
+            );
+
+            compositionList.put(id, c);
+        }
+        return compositionList;
+
     }
 
     public CueList getCueList() {
@@ -119,7 +200,6 @@ public class Production {
     private void setCueList(CueList cl) {
         this.cues = cl;
     }
-
 
     public ResourceList getResourceList() {
         return this.resources;
@@ -141,10 +221,22 @@ public class Production {
     public String toString() {
         StringBuilder stringBuilder = new StringBuilder();
         stringBuilder.append("Name: ").append(name).append("\n");
-        for(var cue : this.cues.keySet()) {
+        for (var cue : this.cues.keySet()) {
             stringBuilder.append("[").append(cue).append("]: ").append(this.cues.get(cue).toString()).append("\n");
         }
 
         return stringBuilder.toString();
+    }
+
+    private void setProcessingList(ProcessingList processingList) {
+        this.processingList = processingList;
+    }
+
+    public CompositionList getCompositionList() {
+        return compositionList;
+    }
+
+    private void setCompositionList(CompositionList compositionList) {
+        this.compositionList = compositionList;
     }
 }
