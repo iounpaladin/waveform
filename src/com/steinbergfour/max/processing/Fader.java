@@ -56,7 +56,7 @@ public class Fader extends Processor {
     public void processInPlace(byte[] input) {
         int startingPosition = this.startKey.toIndex(input.length);
         int endingPosition = this.endKey.toIndex(input.length);
-        for (int idx = startingPosition; idx < endingPosition; idx += 4) { // stereo, 2 bytes per frame
+        for (int idx = 4 * (int) Math.ceil(startingPosition / 4.0d); idx < endingPosition; idx += 4) { // stereo, 2 bytes per frame
             // little endian
             short left = (short) ((input[idx] & 0xFF) | (input[idx + 1] & 0xFF << 8));
             short right = (short) ((input[idx + 2] & 0xFF) | (input[idx + 3] & 0xFF << 8));
