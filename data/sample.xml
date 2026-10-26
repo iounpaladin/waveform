@@ -31,15 +31,16 @@
         <compositions>
             <composition id="#01">
                 <sample type="play" target="01" filters="1"/>
-                <sample type="play" target="02" filters=""/>
-                <sample type="play" target="03" filters=""/>
-                <sample type="play" target="04" filters=""/>
+                <sample type="play" target="02" filters="2"/>
+                <sample type="play" target="03" filters="2"/>
+                <sample type="play" target="04" filters="2"/>
                 <sample type="play" target="05" filters="4"/>
             </composition>
         </compositions>
         <processing>
             <filters>
                 <filter id="1" type="fader" startKey="-1000" endKey="-0" keyframe="volume" startValue="1" endValue="0.75" fadeType="cubic"/>
+                <filter id="2" type="fader" startKey="0" endKey="-0" keyframe="volume" startValue="0.75" endValue="0.75" fadeType="linear" />
                 <filter id="4" type="fader" startKey="0" endKey="1000" keyframe="volume" startValue="0.75" endValue="1" fadeType="cubic" />
             </filters>
         </processing>

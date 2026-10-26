@@ -16,8 +16,8 @@ public class ActionFactory {
         type = attr.getNamedItem("type").getNodeValue();
         ActionType ty = ActionType.valueOf(type.toUpperCase());
         target = attr.getNamedItem("target").getNodeValue();
-        if (attr.getNamedItem("preset") != null) {
-            preset = attr.getNamedItem("preset").getNodeValue();
+        if (attr.getNamedItem("filters") != null) {
+            preset = attr.getNamedItem("filters").getNodeValue();
         }
 
         return switch(ty) {

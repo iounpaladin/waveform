@@ -2,12 +2,14 @@ package com.steinbergfour.max.managers;
 
 import com.steinbergfour.max.actions.ActionSequencer;
 import com.steinbergfour.max.data.*;
+import com.steinbergfour.max.processing.Processor;
 import org.jetbrains.annotations.NotNull;
 
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.concurrent.CompletableFuture;
 
@@ -22,6 +24,7 @@ public class CueManager {
     private final ProcessingList processingList;
     private final CompositionList compositionList;
     private final HashMap<String, CachedData> cache;
+    private final HashMap<String, Processor> processors;
     public static final AudioFormat targetFormat;
 
     static {
@@ -53,6 +56,7 @@ public class CueManager {
         }
         singleton = this;
         this.cache = new HashMap<>();
+        this.processors = new HashMap<>();
         if (preload) this.preloadResources();
     }
 
@@ -82,9 +86,59 @@ public class CueManager {
             }
         }
 
+        System.out.println("== Processor Initialisation ==");
+        for (var processorName : processingList.keySet()) {
+            this.processors.put(processorName, Processor.generate(processingList.get(processorName)));
+        }
+
         System.out.println("== Composition Initialisation ==");
 
-        System.out.println(this.compositionList.keySet());
+        for (var compositionID : this.compositionList.keySet()) {
+            var composition = this.compositionList.get(compositionID);
+
+            var result = this.compose(composition);
+
+            cache.put(
+                    compositionID,
+                    new CachedData(result, targetFormat, result.length)
+            );
+        }
+    }
+
+    private byte @NotNull [] compose(Composition composition) {
+        var samples = composition.sampleList();
+
+        byte[] current = new byte[0];
+
+        for (var sample : samples) {
+            current = join(
+                    current,
+                    this.applyFilters(
+                            this.cache.get(sample.target()).data, sample.filters()
+                    )
+            );
+        }
+
+        return current;
+    }
+
+    private byte[] applyFilters(byte[] data, String filters) {
+        byte[] current = Arrays.copyOf(data, data.length);
+        String[] filterList = filters.split(",\\s*");
+
+        for(String filter : filterList) {
+            var processingData = this.processors.get(filter);
+            processingData.processInPlace(current);
+        }
+
+        return current;
+    }
+
+    public static byte[] join(byte[] a, byte[] b) {
+        byte[] result = new byte[a.length + b.length];
+        System.arraycopy(a, 0, result, 0, a.length);
+        System.arraycopy(b, 0, result, a.length, b.length);
+        return result;
     }
 
     public void trigger(@NotNull Cue c) {
