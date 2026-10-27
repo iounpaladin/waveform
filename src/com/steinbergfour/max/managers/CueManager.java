@@ -8,6 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
+import java.io.FileOutputStream;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -126,10 +127,26 @@ public class CueManager {
         byte[] current = Arrays.copyOf(data, data.length);
         String[] filterList = filters.split(",\\s*");
 
+        try {
+            FileOutputStream fos = new FileOutputStream("before.bin");
+            fos.write(current);
+        } catch (Exception e) {
+
+        }
+
         for(String filter : filterList) {
             var processingData = this.processors.get(filter);
             processingData.processInPlace(current);
         }
+
+        try {
+            FileOutputStream fos = new FileOutputStream("after.bin");
+            fos.write(current);
+        } catch (Exception e) {
+
+        }
+
+        // plot a chart of this bullshit to see whats happening lol
 
         return current;
     }
