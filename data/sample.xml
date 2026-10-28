@@ -33,8 +33,8 @@
                 <sample type="play" target="01" filters="1"/>
                 <sample type="play" target="02" filters="2"/>
                 <sample type="play" target="03" filters="2"/>
-                <sample type="play" target="04" filters="2"/>
-                <sample type="play" target="05" filters="4"/>
+                <sample type="play" target="02" filters="2"/>
+                <sample type="play" target="01" filters="4"/>
             </composition>
         </compositions>
         <processing>

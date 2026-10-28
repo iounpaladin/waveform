@@ -56,10 +56,10 @@ public class Fader extends Processor {
     public void processInPlace(byte[] input) {
         int startingPosition = this.startKey.toIndex(input.length);
         int endingPosition = this.endKey.toIndex(input.length);
-        for (int idx = 4 * (int) Math.ceil(startingPosition / 4.0d); idx < endingPosition; idx += 4) { // stereo, 2 bytes per frame
+        for (int idx = 4 * (int) Math.ceil(startingPosition / 4.0d); idx + 3 < endingPosition; idx += 4) { // stereo, 2 bytes per frame per channel
             // little endian
-            short left = (short) ((input[idx] & 0xFF) | (input[idx + 1] & 0xFF << 8));
-            short right = (short) ((input[idx + 2] & 0xFF) | (input[idx + 3] & 0xFF << 8));
+            short left = (short) ((input[idx] & 0xFF) | ((input[idx + 1] & 0xFF) << 8));
+            short right = (short) ((input[idx + 2] & 0xFF) | ((input[idx + 3] & 0xFF) << 8));
 
             float cursor = (float) (idx - startingPosition) / (endingPosition - startingPosition);
             float currentValue = this.interpolate(this.startValue, this.endValue, cursor);
@@ -72,8 +72,6 @@ public class Fader extends Processor {
             input[idx + 1] = (byte) ((newLeft >> 8) & 0xFF);
             input[idx + 2] = (byte) (newRight & 0xFF);
             input[idx + 3] = (byte) ((newRight >> 8) & 0xFF);
-            // this is bullshit
-            // need to pack into 16 bit, signed, little endian samples
         }
     }
 

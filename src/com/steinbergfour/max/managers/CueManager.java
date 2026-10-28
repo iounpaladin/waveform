@@ -80,7 +80,7 @@ public class CueManager {
                         resourceName,
                         new CachedData(data, aisConverted.getFormat(), aisConverted.getFrameLength())
                 );
-                System.out.printf("%s=%s successfully initialised\n", resourceName, resource.href());
+                System.out.printf("Cached %s=%s\n", resourceName, resource.href());
             } catch (Exception e) {
                 // ignored
                 e.printStackTrace();
@@ -90,6 +90,7 @@ public class CueManager {
         System.out.println("== Processor Initialisation ==");
         for (var processorName : processingList.keySet()) {
             this.processors.put(processorName, Processor.generate(processingList.get(processorName)));
+            System.out.printf("Built processor %s=%s\n", processorName, processingList.get(processorName).type());
         }
 
         System.out.println("== Composition Initialisation ==");
@@ -103,7 +104,10 @@ public class CueManager {
                     compositionID,
                     new CachedData(result, targetFormat, result.length)
             );
+            System.out.printf("Composed %s\n", compositionID);
         }
+
+        // todo: process loops
     }
 
     private byte @NotNull [] compose(Composition composition) {
@@ -127,26 +131,10 @@ public class CueManager {
         byte[] current = Arrays.copyOf(data, data.length);
         String[] filterList = filters.split(",\\s*");
 
-        try {
-            FileOutputStream fos = new FileOutputStream("before.bin");
-            fos.write(current);
-        } catch (Exception e) {
-
-        }
-
         for(String filter : filterList) {
             var processingData = this.processors.get(filter);
             processingData.processInPlace(current);
         }
-
-        try {
-            FileOutputStream fos = new FileOutputStream("after.bin");
-            fos.write(current);
-        } catch (Exception e) {
-
-        }
-
-        // plot a chart of this bullshit to see whats happening lol
 
         return current;
     }
