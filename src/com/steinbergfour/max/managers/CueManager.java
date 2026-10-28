@@ -8,7 +8,6 @@ import org.jetbrains.annotations.NotNull;
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
-import java.io.FileOutputStream;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -63,9 +62,6 @@ public class CueManager {
 
     public void preloadResources() {
         // resources !!!
-
-        // todo: create compositions and apply filters
-        // also need to rename/restructure some stuff in the data
         System.out.println("== Resource Initialisation ==");
         for (var resourceName : resourceList.keySet()) {
             var resource = resourceList.get(resourceName);
