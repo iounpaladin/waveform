@@ -73,8 +73,8 @@ public class Production {
             String id = attr.getNamedItem("id").getNodeValue();
             String cueName = attr.getNamedItem("name").getNodeValue();
 
-            String reminder = ((Element) cue).getElementsByTagName("reminder").item(0).getTextContent();
-
+            var reminderObj = ((Element) cue).getElementsByTagName("reminder").item(0);
+            String reminder = reminderObj == null ? "" : reminderObj.getTextContent();
             // == actions ==
             ActionList actionList = new ActionList();
 
@@ -84,7 +84,7 @@ public class Production {
             for (int j = 0; j < actions.getLength(); j++) {
                 var action = actions.item(j);
 
-                actionList.add(ActionFactory.fromXML(action));
+                actionList.add(ActionFactory.fromXML(cueName, action));
             }
 
             Cue c = new Cue(hotkey, cueName, reminder, actionList, Cue.Reduction.valueOf(red));

@@ -7,21 +7,22 @@ import org.w3c.dom.Node;
 
 public class ActionFactory {
     public static enum ActionType {
-        PLAY, KILL, MIDI
+        PLAY, KILL, PAUSE
     }
-    public static Actionable fromXML(Node action) {
-        String type, target, preset = "";
+    public static Actionable fromXML(String owningCue, Node action) {
+        String type, target;
+        boolean loop = false;
 
         var attr = action.getAttributes();
         type = attr.getNamedItem("type").getNodeValue();
         ActionType ty = ActionType.valueOf(type.toUpperCase());
         target = attr.getNamedItem("target").getNodeValue();
-        if (attr.getNamedItem("filters") != null) {
-            preset = attr.getNamedItem("filters").getNodeValue();
+        if (attr.getNamedItem("loop") != null) {
+            loop = true;
         }
 
         return switch(ty) {
-            case PLAY -> new PlayAction(target, preset);
+            case PLAY -> new PlayAction(target, owningCue, loop);
             case KILL -> new KillAction(target);
             default -> null;
         };
