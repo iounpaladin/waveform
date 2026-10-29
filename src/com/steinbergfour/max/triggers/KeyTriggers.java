@@ -1,5 +1,6 @@
 package com.steinbergfour.max.triggers;
 
+import com.steinbergfour.max.data.Cue;
 import com.steinbergfour.max.data.Production;
 
 import javax.sound.midi.MidiSystem;
@@ -7,6 +8,7 @@ import javax.sound.midi.Synthesizer;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.util.Objects;
+import java.util.function.Consumer;
 
 public class KeyTriggers implements KeyListener {
     private Production p;
@@ -14,6 +16,7 @@ public class KeyTriggers implements KeyListener {
     private static final int volume = 80;
     private Synthesizer synth;
     private boolean midi;
+    private final Consumer<Cue> a;
     // todo: implement hold hotkeys (and/or double actions)
 
     public static String keyEventToHotkey(KeyEvent e) {
@@ -26,8 +29,9 @@ public class KeyTriggers implements KeyListener {
         return String.valueOf(e.getKeyChar());
     }
 
-    public KeyTriggers(Production p) {
+    public KeyTriggers(Production p, Consumer<Cue> a) {
         this.p = p;
+        this.a = a;
 //        try {
 //            this.synth = MidiSystem.getSynthesizer();
 //            this.synth.open();
@@ -58,6 +62,7 @@ public class KeyTriggers implements KeyListener {
             var cue = p.getCueList().get(cueID);
             if (Objects.equals(cue.hotkey(), keyEventToHotkey(e))) {
                 p.trigger(cue);
+                this.a.accept(cue);
             }
         }
 

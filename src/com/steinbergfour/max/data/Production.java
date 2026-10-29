@@ -15,7 +15,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 
 public class Production {
-    private String name;
+    private final String name;
     private ResourceList resources;
     private CueList cues;
     private ProcessingList processingList;
