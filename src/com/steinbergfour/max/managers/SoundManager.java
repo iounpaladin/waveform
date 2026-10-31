@@ -15,7 +15,7 @@ public class SoundManager {
         this.clips = new HashMap<>();
     }
 
-    public boolean fire(String owningCue, AudioInputStream ais, Responder completed, boolean loop)  {
+    public boolean fire(String owningCue, AudioInputStream ais, Responder completed, boolean loop) {
         final Clip clip;
         try {
             clip = AudioSystem.getClip();
@@ -31,17 +31,19 @@ public class SoundManager {
         }
 
         clip.start();
-        if(loop) clip.loop(Clip.LOOP_CONTINUOUSLY);
+        if (loop) clip.loop(Clip.LOOP_CONTINUOUSLY);
 
         clip.addLineListener(event -> {
-                if (event.getType() == LineEvent.Type.STOP) {
-                    completed.respond();
-                    clip.close();
-                    this.clips.get(owningCue).remove(clip);
-                }
+            System.out.println(event);
+            if (event.getType() == LineEvent.Type.STOP) {
+                if (clip.isActive()) clip.close();
+                CueManager.singleton._announceFinished(owningCue);
+                this.clips.get(owningCue).remove(clip);
+                completed.respond();
+            }
         });
 
-        if(!this.clips.containsKey(owningCue)) {
+        if (!this.clips.containsKey(owningCue)) {
             this.clips.put(owningCue, new ArrayList<>());
         }
         this.clips.get(owningCue).add(clip);
@@ -55,7 +57,8 @@ public class SoundManager {
     }
 
     public void kill(String cue) {
-        for(var clip : this.clips.get(cue)) {
+        for (var clip : this.clips.get(cue)) {
+            clip.stop();
             clip.close();
         }
     }

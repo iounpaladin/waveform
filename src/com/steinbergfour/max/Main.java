@@ -2,6 +2,7 @@ package com.steinbergfour.max;
 
 import com.steinbergfour.max.data.Cue;
 import com.steinbergfour.max.data.Production;
+import com.steinbergfour.max.managers.CueManager;
 import com.steinbergfour.max.triggers.KeyTriggers;
 import net.miginfocom.swing.MigLayout;
 
@@ -9,10 +10,9 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.io.File;
-import java.util.Comparator;
+import java.util.*;
 import java.util.List;
-import java.util.Random;
-import java.util.Vector;
+import java.util.Timer;
 import java.util.stream.Collectors;
 import javax.sound.midi.ControllerEventListener;
 import javax.sound.midi.InvalidMidiDataException;
@@ -29,9 +29,6 @@ import javax.swing.table.TableCellRenderer;
 
 import static com.steinbergfour.max.managers.CueManager.targetFormat;
 
-/**
- * @see http://stackoverflow.com/a/17767350/230513
- */
 public class Main {
     private static final Random R = new Random();
     private Production p;
@@ -56,6 +53,14 @@ public class Main {
         ProductionFrame frame = new ProductionFrame(this.p);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.addKeyListener(new KeyTriggers(p, this::receiveKey));
+        CueManager.singleton.registerListener(
+                frame::cueTriggered,
+                CueManager.ListenerType.ACTIVATED
+        );
+        CueManager.singleton.registerListener(
+                frame::cueFinished,
+                CueManager.ListenerType.FINISHED
+        );
         frame.setFocusable(true);
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);
@@ -63,8 +68,9 @@ public class Main {
     }
 
     public void receiveKey(Cue e) {
-        this.frame.cueTriggered(e);
-    } // todo: cue ends trigger
+//        this.frame.cueTriggered(e);
+        // deprecated
+    }
 
     private static class ProductionFrame extends JFrame {
         private final Production production;
@@ -73,8 +79,9 @@ public class Main {
         private JProgressBar playBar;
         private JButton pausePlay;
         private JPanel fftPanel;
-        private int selectedRow = -1;
+        private Vector<Integer> nowPlaying;
         public static ProductionFrame singleton;
+        private Vector<Long> recentlyStarted;
 
         public ProductionFrame(Production p) {
             this.production = p;
@@ -86,10 +93,24 @@ public class Main {
         public void cueTriggered(Cue c) {
             for (int row = 0; row < this.cueContainer.getModel().getRowCount(); row++) {
                 if (this.cueContainer.getModel().getValueAt(row, 0).equals(c.name())) {
-//                    this.cueContainer.changeSelection(row, 0, false, false);
-//                    this.cueContainer.changeSelection(row, 2, false, true);
-//                    break;
-                    this.selectedRow = row;
+                    this.nowPlaying.set(
+                            row,
+                            this.nowPlaying.get(row) + 1
+                    );
+                    this.recentlyStarted.set(row, System.currentTimeMillis());
+                    this.cueContainer.updateUI();
+                    break;
+                }
+            }
+        }
+
+        public void cueFinished(Cue c) {
+            for (int row = 0; row < this.cueContainer.getModel().getRowCount(); row++) {
+                if (this.cueContainer.getModel().getValueAt(row, 0).equals(c.name())) {
+                    this.nowPlaying.set(
+                            row,
+                            this.nowPlaying.get(row) - 1
+                    );
                     this.cueContainer.updateUI();
                     break;
                 }
@@ -112,20 +133,22 @@ public class Main {
 
             // cue table
             this.cueScroller = new JScrollPane();
-            this.cueContainer = new JTable(){
+            this.cueContainer = new JTable() {
                 public Component prepareRenderer(
                         TableCellRenderer renderer, int row,
                         int column) {
                     Component c = super.prepareRenderer(renderer,
                             row, column);
-                    c.setBackground(row == ProductionFrame.singleton.selectedRow ? Color.RED : getBackground());
+                    c.setBackground(colorLerp(getBackground(), Color.red, ((double) ProductionFrame.singleton.nowPlaying.get(row)) / 10.0f));
                     return c;
                 }
+
                 @Override
                 public boolean isCellEditable(int row, int column) {
                     return false;
                 }
-            };;
+            };
+            ;
             this.cueScroller.setViewportView(this.cueContainer);
             this.getContentPane().add(this.cueScroller, "cell 0 0");
 
@@ -148,18 +171,27 @@ public class Main {
             }
             this.cueContainer.setModel(new DefaultTableModel(
                     data, new Vector<>(List.of(new String[]{"Name", "Hotkey", "Reminder"}))
-            ){
+            ) {
                 @Override
                 public boolean isCellEditable(int row, int column) {
                     return false;
                 }
             });
+            this.nowPlaying = new Vector<>(Collections.nCopies(data.size(), 0));
+            this.recentlyStarted = new Vector<>(Collections.nCopies(data.size(), 0L));
             this.cueContainer.setRowSelectionAllowed(false);
             this.cueContainer.setColumnSelectionAllowed(false);
             this.cueContainer.setCellSelectionEnabled(false);
 
             // progress bar and play/pause
-            this.playBar = new JProgressBar(0, (int) (targetFormat.getSampleRate() * 60));
+            this.playBar = new JProgressBar(0, 100);
+            Timer t = new Timer();
+            t.scheduleAtFixedRate(new TimerTask() {
+                @Override
+                public void run() {
+                    ProductionFrame.singleton.updateBar();
+                }
+            }, 0, 100);
             this.pausePlay = new JButton("\u23f8"); // \u25b6
             this.pausePlay.addActionListener(e -> {
             });
@@ -178,6 +210,44 @@ public class Main {
             this.fftPanel.setFocusable(false);
             this.pack();
             this.setLocationRelativeTo(this.getOwner());
+        }
+
+        private void updateBar() {
+            if (!CueManager.singleton.cacheInitialised()) {
+                return;
+            }
+            for (int i = 0; i < this.nowPlaying.size(); i++) {
+                if (this.nowPlaying.get(i) > 0) {
+                    long started = this.recentlyStarted.get(i);
+                    long now = System.currentTimeMillis();
+                    long elapsed = (now - started) / 1000;
+
+                    String cueName = this.cueContainer.getModel().getValueAt(i, 0).toString();
+                    for (var cue : this.production.getCueList().keySet()) {
+                        var cueObj = this.production.getCueList().get(cue);
+                        if (cueObj.name().equals(cueName)) { // this doesn't work at all because cues can trigger multiple things to play
+//                            CueManager.CachedData cache = CueManager.singleton.getCache(cue);
+//                            int total = (int) (cache.data().length / (cache.fmt().getFrameSize() * cache.fmt().getSampleRate()));
+                            int total = 25;
+
+                            double percent = ((double) elapsed) / ((double) total);
+                            int percentAsInt = ((int) (percent * 100));
+                            this.playBar.setValue(percentAsInt);
+                            this.playBar.updateUI();
+                            return;
+                        }
+                    }
+                }
+            }
+        }
+
+        private Color colorLerp(Color a, Color b, double v) {
+            v = Math.clamp(v, 0, 1);
+            return new Color(
+                    (int) (a.getRed() * (1 - v) + b.getRed() * v),
+                    (int) (a.getGreen() * (1 - v) + b.getGreen() * v),
+                    (int) (a.getBlue() * (1 - v) + b.getBlue() * v)
+            );
         }
     }
 
