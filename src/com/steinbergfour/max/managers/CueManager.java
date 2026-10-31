@@ -39,6 +39,20 @@ public class CueManager {
         );
     }
 
+    // todo: add property to cue as to whether or not it can fire multiple times, and add a "monolithic" tag. basically
+    // split cues into 2 kinds: monolithic, one play action, that updates progress bar and pause/play
+    // and "action" cues that can be fafo'd over the other cues (and over themselves)
+
+    // restructuring to do:
+    // 1. cue manager should be able to report
+    // a) what monolithic cue is playing
+    // b) how long it is
+    // c) what duration we are at
+    // and this should be reflected on the ui
+    // other things don't get highlighted
+    // 2. refactor pcm/audio manipulation into a separate package that can be tested independently of the bullshit
+
+
     // should never be called by anyone but SoundManager
     public void _announceFinished(String owningCue) {
         // todo: disambiguate between action cues and play cues
