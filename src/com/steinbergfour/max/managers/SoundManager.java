@@ -1,15 +1,13 @@
 package com.steinbergfour.max.managers;
 
 import com.steinbergfour.max.actions.Responder;
+import com.steinbergfour.max.data.Cue;
 
 import javax.sound.sampled.*;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class SoundManager {
-    private final Map<String, List<Clip>> clips;
+    private final Map<String, List<Pair<Clip, Long>>> clips;
 
     public SoundManager() {
         this.clips = new HashMap<>();
@@ -46,7 +44,8 @@ public class SoundManager {
         if (!this.clips.containsKey(owningCue)) {
             this.clips.put(owningCue, new ArrayList<>());
         }
-        this.clips.get(owningCue).add(clip);
+        this.clips.get(owningCue).add(new Pair<>(clip, 0L));
+
         return true;
     }
 
@@ -58,8 +57,42 @@ public class SoundManager {
 
     public void kill(String cue) {
         for (var clip : this.clips.get(cue)) {
-            clip.stop();
-            clip.close();
+            clip.first().stop();
+            clip.first().close();
         }
+        this.clips.put(cue, new ArrayList<>());
+    }
+
+    public long pause(String cue) {
+        // only return a long if we are in a blocking/monolithic cue
+//        System.out.println(this.clips.get(cue));
+        if (this.clips.get(cue).size() == 1) {
+            var c = this.clips.get(cue).getFirst();
+            long pos = c.first().getMicrosecondPosition();
+            c.first().stop();
+            c.first().close();
+            this.clips.get(cue).remove(c);
+            return pos;
+        } else {
+            this.kill(cue);
+            return 0L;
+        }
+    }
+
+    public void resumeMicroseconds(String cue, long pos) {
+        // assumes its already been triggered
+        for (var clip : this.clips.get(cue)) {
+            clip.first().setMicrosecondPosition(pos);
+        }
+    }
+
+    public void resume(String cue, double pos) {
+        this.resumeMicroseconds(cue, (long) (pos * CueManager.singleton.blockingCueDuration()));
+        // assumes its already been triggered
+//        for (var clip : this.clips.get(cue)) {
+//            clip.first().setMicrosecondPosition((long) (pos * CueManager.singleton.blockingCueDuration()));
+//            System.out.println(pos);
+//            System.out.println(clip.first().getMicrosecondPosition());
+//        }
     }
 }

@@ -9,6 +9,8 @@ import net.miginfocom.swing.MigLayout;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.io.File;
 import java.util.*;
 import java.util.List;
@@ -40,7 +42,7 @@ public class Main {
 
     private Main() {
         try {
-            this.p = Production.fromXML(new File("data/sample.xml"));
+            this.p = Production.fromXML(new File("example/maan.xml"));
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -188,6 +190,26 @@ public class Main {
 
             // progress bar and play/pause
             this.playBar = new JProgressBar(0, 1000);
+            this.playBar.addMouseListener(new MouseAdapter() {
+                @Override
+                public void mouseClicked(MouseEvent e) {
+                    int mouseX = e.getX();
+                    int barWidth = playBar.getWidth();
+                    int min = playBar.getMinimum();
+                    int max = playBar.getMaximum();
+
+                    // Calculate the new value based on click position
+                    int newValue = (int) (((double) mouseX / barWidth) * (max - min) + min);
+
+                    // Ensure value stays within bounds
+                    newValue = Math.max(min, Math.min(max, newValue));
+
+                    playBar.setValue(newValue);
+                    // doesnt work
+                    CueManager.singleton.getSoundManager().resume(CueManager.singleton.getCurrentBlockingCue().name(), newValue / 1000f);
+                }
+            });
+
             Timer t = new Timer();
             t.scheduleAtFixedRate(new TimerTask() {
                 @Override
@@ -223,8 +245,8 @@ public class Main {
 
             if (c.playingBlockingCue()) {
                 long start = c.blockingCueStarted();
-                int elapsed = c.isPaused() ? c.getFramePausedAt() : (int)(now - start);
-                int thousands = (int)((elapsed / (float) c.blockingCueDuration()));
+                long elapsed = c.isPaused() ? c.getFramePausedAt() : now - start;
+                int thousands = (int)((elapsed / (double) c.blockingCueDuration()) * 1000);
                 this.playBar.setValue(thousands);
             } else {
                 this.playBar.setValue(0);

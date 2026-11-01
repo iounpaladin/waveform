@@ -6,6 +6,7 @@ import com.steinbergfour.max.actions.SimultaneousActionFirer;
 import com.steinbergfour.max.data.*;
 import com.steinbergfour.max.processing.Processor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioInputStream;
@@ -33,7 +34,7 @@ public class CueManager {
     private long lastTriggeredBlockingCue;
     private boolean playingBlockingCue;
     private boolean paused;
-    private int framePausedAt;
+    private long framePausedAt;
     private Cue blockingCue;
 
     static {
@@ -91,10 +92,10 @@ public class CueManager {
     }
 
     // in ms
-    public int blockingCueDuration() {
+    public long blockingCueDuration() {
         var axn = (PlayAction) this.blockingCue.actions().getFirst();
         var cache = this.cache.get(axn.getTarget());
-        return cache.data.length / (int)(targetFormat.getFrameRate() * targetFormat.getFrameSize());
+        return cache.data.length / (long) (targetFormat.getFrameRate() * targetFormat.getFrameSize()) * 1000;
     }
 
     public boolean isPaused() {
@@ -103,10 +104,16 @@ public class CueManager {
 
     public void pause() {
         this.paused = !this.paused;
-        // todo: update
+        System.out.println(this.framePausedAt);
+        if (this.paused) {
+            this.framePausedAt = this.getSoundManager().pause(this.blockingCue.name());
+        } else {
+            this.trigger(this.blockingCue, true);
+            this.getSoundManager().resumeMicroseconds(this.blockingCue.name(), this.framePausedAt);
+        }
     }
 
-    public int getFramePausedAt() {
+    public long getFramePausedAt() {
         return this.framePausedAt;
     }
 
@@ -156,7 +163,8 @@ public class CueManager {
                 this.cueFinishedListeners.add(listener);
                 break;
         }
-}
+    }
+
     public void preloadResources() {
         // resources !!!
         System.out.println("== Resource Initialisation ==");
@@ -226,9 +234,10 @@ public class CueManager {
         byte[] current = Arrays.copyOf(data, data.length);
         String[] filterList = filters.split(",\\s*");
 
-        for(String filter : filterList) {
+        for (String filter : filterList) {
             var processingData = this.processors.get(filter);
-            processingData.processInPlace(current);
+            if (processingData != null)
+                processingData.processInPlace(current);
         }
 
         return current;
@@ -253,7 +262,11 @@ public class CueManager {
         }
     }
 
-    public void trigger(@NotNull Cue c) {
+    public void trigger(@Nullable Cue c) {
+        this.trigger(c, false);
+    }
+
+    public void trigger(@NotNull Cue c, boolean resuming) {
         this.triggerActivateListeners(c);
         System.out.printf("Trigger %s\n", c.name());
         switch (c.type()) {
@@ -267,9 +280,12 @@ public class CueManager {
                 var axn = c.actions().getFirst();
                 this.blockingCue = c;
                 this.playingBlockingCue = true;
-                this.lastTriggeredBlockingCue = System.currentTimeMillis();
-                axn.activate(this::clearBlockingCue);
-
+                if (!resuming)
+                    this.lastTriggeredBlockingCue = System.currentTimeMillis();
+                else
+                    this.lastTriggeredBlockingCue = System.currentTimeMillis() - this.framePausedAt;
+//                axn.activate(this::clearBlockingCue);
+                axn.activate(null);
                 break;
         }
     }
@@ -285,13 +301,15 @@ public class CueManager {
 //        firer.fireAndThen(
 //                () -> {this._announceFinished(owningCue);}
 //        );
-        firer.fireAndThen(() -> {});
+        firer.fireAndThen(() -> {
+        });
     }
 
     private void sequence(String owningCue, ActionList actionList) {
         ActionSequencer seq = new ActionSequencer(actionList);
 //        seq.runAsync(() -> {this._announceFinished(owningCue);});
-        seq.runAsync(() -> {});
+        seq.runAsync(() -> {
+        });
     }
 
     public SoundManager getSoundManager() {

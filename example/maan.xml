@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<production>
+    <meta>
+        <name>MAAN</name>
+    </meta>
+
+    <data>
+        <cues>
+            <cue hotkey="1" id="1" name="@2.1.B.1.1">
+                <reminder><![CDATA[Line 3 Scene 100 whatever]]></reminder>
+                <actions reduce="blocking">
+                    <action type="play" target="#01"/>
+                </actions>
+            </cue>
+
+            <cue hotkey="ESC" id="2" name="kill">
+                <actions reduce="simultaneous">
+                    <action type="kill" target="@e"/>
+                </actions>
+            </cue>
+
+            <cue hotkey="SPACE" id="3" name="pause">
+                <actions reduce="simultaneous">
+                    <action type="pause" target="@e"/>
+                </actions>
+            </cue>
+        </cues>
+        <resources> <!-- uncompressed data only, e.g. wav -->
+            <resource id="01" href="example\01-@2.1.B.1.1.wav"/>
+            <resource id="02" href="example\02-@2.1.B.1.2.wav"/>
+            <resource id="03" href="example\03-tr 1.2 #1.wav"/>
+            <resource id="04" href="example\04-1.2.wav"/>
+            <resource id="05" href="example\05-@2.1.B.1.3 tr #1.wav"/>
+            <resource id="06" href="example\06-1.3.wav"/>
+            <resource id="07" href="example\07-tr 1.4.wav"/>
+            <resource id="08" href="example\08-1.4.wav"/>
+            <resource id="09" href="example\09-@2.1.B.1.5.wav"/>
+            <resource id="10" href="example\10-@2.1.B.1.6.wav"/>
+            <resource id="11" href="example\11-@loop.wav"/>
+            <resource id="12" href="example\12-@2.1.B.1.7.wav"/>
+        </resources>
+        <compositions>
+            <composition id="#01">
+                <sample type="play" target="01" filters=""/>
+                <sample type="play" target="02" filters="1"/> <!-- @1.2 drop to 75% -->
+                <sample type="play" target="03" filters="2"/>
+                <sample type="play" target="04" filters="2"/>
+                <sample type="play" target="05" filters="2"/>
+                <sample type="play" target="06" filters="3"/> <!-- @1.3 100% -->
+                <sample type="play" target="07" filters="1"/> <!-- drop 75% -->
+                <sample type="play" target="08" filters="2"/>
+                <sample type="play" target="09" filters="3"/> <!-- 100% -->
+                <sample type="play" target="10" filters="1"/> <!-- 75% @end -->
+                <sample type="play" target="11" filters="2"/>
+                <sample type="play" target="12" filters="3"/> <!-- 100% @start -->
+            </composition>
+        </compositions>
+        <processing>
+            <filters>
+                <filter id="1" type="fader" startKey="-500" endKey="-0" keyframe="volume" startValue="1" endValue="0.5" fadeType="cubic"/>
+                <filter id="2" type="fader" startKey="0" endKey="-0" keyframe="volume" startValue="0.5" endValue="0.5" fadeType="linear" />
+                <filter id="3" type="fader" startKey="0" endKey="500" keyframe="volume" startValue="0.5" endValue="1" fadeType="cubic" />
+            </filters>
+        </processing>
+    </data>
+</production>
