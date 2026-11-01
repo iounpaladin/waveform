@@ -16,6 +16,10 @@ public class PlayAction implements Actionable {
         this.loop = loop;
     }
 
+    public String getTarget() {
+        return this.target;
+    }
+
     @Override
     public void activate(Responder responder) {
         System.out.println(this.target);

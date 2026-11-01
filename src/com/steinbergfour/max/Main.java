@@ -133,13 +133,16 @@ public class Main {
 
             // cue table
             this.cueScroller = new JScrollPane();
-            this.cueContainer = new JTable() {
+            this.cueContainer = new JTable() { // todo: flashing animation when an action cue is triggered
                 public Component prepareRenderer(
                         TableCellRenderer renderer, int row,
                         int column) {
                     Component c = super.prepareRenderer(renderer,
                             row, column);
-                    c.setBackground(colorLerp(getBackground(), Color.red, ((double) ProductionFrame.singleton.nowPlaying.get(row)) / 10.0f));
+                    if (CueManager.singleton.playingBlockingCue()) {
+                        var cue = CueManager.singleton.getCurrentBlockingCue();
+                        c.setBackground(colorLerp(getBackground(), Color.red,  (this.getModel().getValueAt(row, 0).equals(cue.name())) ? 1 : 0));
+                    }
                     return c;
                 }
 
@@ -184,7 +187,7 @@ public class Main {
             this.cueContainer.setCellSelectionEnabled(false);
 
             // progress bar and play/pause
-            this.playBar = new JProgressBar(0, 100);
+            this.playBar = new JProgressBar(0, 1000);
             Timer t = new Timer();
             t.scheduleAtFixedRate(new TimerTask() {
                 @Override
@@ -192,8 +195,10 @@ public class Main {
                     ProductionFrame.singleton.updateBar();
                 }
             }, 0, 100);
-            this.pausePlay = new JButton("\u23f8"); // \u25b6
+            this.pausePlay = new JButton("⏸"); // \u25b6
             this.pausePlay.addActionListener(e -> {
+                CueManager.singleton.pause();
+                pausePlay.setText(CueManager.singleton.isPaused() ? "▶" : "⏸");
             });
             this.getContentPane().add(this.playBar, "cell 0 2");
             this.getContentPane().add(this.pausePlay, "cell 1 2");
@@ -213,32 +218,20 @@ public class Main {
         }
 
         private void updateBar() {
-            if (!CueManager.singleton.cacheInitialised()) {
-                return;
-            }
-            for (int i = 0; i < this.nowPlaying.size(); i++) {
-                if (this.nowPlaying.get(i) > 0) {
-                    long started = this.recentlyStarted.get(i);
-                    long now = System.currentTimeMillis();
-                    long elapsed = (now - started) / 1000;
+            var c = CueManager.singleton;
+            long now = System.currentTimeMillis();
 
-                    String cueName = this.cueContainer.getModel().getValueAt(i, 0).toString();
-                    for (var cue : this.production.getCueList().keySet()) {
-                        var cueObj = this.production.getCueList().get(cue);
-                        if (cueObj.name().equals(cueName)) { // this doesn't work at all because cues can trigger multiple things to play
-//                            CueManager.CachedData cache = CueManager.singleton.getCache(cue);
-//                            int total = (int) (cache.data().length / (cache.fmt().getFrameSize() * cache.fmt().getSampleRate()));
-                            int total = 25;
-
-                            double percent = ((double) elapsed) / ((double) total);
-                            int percentAsInt = ((int) (percent * 100));
-                            this.playBar.setValue(percentAsInt);
-                            this.playBar.updateUI();
-                            return;
-                        }
-                    }
-                }
+            if (c.playingBlockingCue()) {
+                long start = c.blockingCueStarted();
+                int elapsed = c.isPaused() ? c.getFramePausedAt() : (int)(now - start);
+                int thousands = (int)((elapsed / (float) c.blockingCueDuration()));
+                this.playBar.setValue(thousands);
+            } else {
+                this.playBar.setValue(0);
             }
+
+            SwingUtilities.invokeLater(this.playBar::updateUI);
+//            this.playBar.updateUI();
         }
 
         private Color colorLerp(Color a, Color b, double v) {

@@ -1,6 +1,7 @@
 package com.steinbergfour.max.managers;
 
 import com.steinbergfour.max.actions.ActionSequencer;
+import com.steinbergfour.max.actions.PlayAction;
 import com.steinbergfour.max.actions.SimultaneousActionFirer;
 import com.steinbergfour.max.data.*;
 import com.steinbergfour.max.processing.Processor;
@@ -29,6 +30,12 @@ public class CueManager {
     private final List<Consumer<Cue>> cueActivatedListeners;
     private final List<Consumer<Cue>> cueFinishedListeners;
 
+    private long lastTriggeredBlockingCue;
+    private boolean playingBlockingCue;
+    private boolean paused;
+    private int framePausedAt;
+    private Cue blockingCue;
+
     static {
         targetFormat = new AudioFormat(
                 44100f,
@@ -41,7 +48,7 @@ public class CueManager {
 
     // todo: add property to cue as to whether or not it can fire multiple times, and add a "monolithic" tag. basically
     // split cues into 2 kinds: monolithic, one play action, that updates progress bar and pause/play
-    // and "action" cues that can be fafo'd over the other cues (and over themselves)
+    // and "action" cues that can be faf'd over the other cues (and over themselves)
 
     // restructuring to do:
     // 1. cue manager should be able to report
@@ -50,6 +57,7 @@ public class CueManager {
     // c) what duration we are at
     // and this should be reflected on the ui
     // other things don't get highlighted
+    // this is also the stuff that gets ffted
     // 2. refactor pcm/audio manipulation into a separate package that can be tested independently of the bullshit
 
 
@@ -68,6 +76,38 @@ public class CueManager {
         if (owningCueObj == null) return;
 
         this.triggerFinishedListeners(owningCueObj);
+    }
+
+    public Cue getCurrentBlockingCue() {
+        return this.blockingCue;
+    }
+
+    public boolean playingBlockingCue() {
+        return this.playingBlockingCue;
+    }
+
+    public long blockingCueStarted() {
+        return this.lastTriggeredBlockingCue;
+    }
+
+    // in ms
+    public int blockingCueDuration() {
+        var axn = (PlayAction) this.blockingCue.actions().getFirst();
+        var cache = this.cache.get(axn.getTarget());
+        return cache.data.length / (int)(targetFormat.getFrameRate() * targetFormat.getFrameSize());
+    }
+
+    public boolean isPaused() {
+        return this.paused;
+    }
+
+    public void pause() {
+        this.paused = !this.paused;
+        // todo: update
+    }
+
+    public int getFramePausedAt() {
+        return this.framePausedAt;
     }
 
     public boolean cacheInitialised() {
@@ -204,14 +244,12 @@ public class CueManager {
     private void triggerActivateListeners(Cue c) {
         for (var listener : this.cueActivatedListeners) {
             listener.accept(c);
-            System.out.println(listener);
         }
     }
 
     private void triggerFinishedListeners(Cue c) {
         for (var listener : this.cueFinishedListeners) {
             listener.accept(c);
-            System.out.println(listener);
         }
     }
 
@@ -225,7 +263,21 @@ public class CueManager {
             case SIMULTANEOUS:
                 this.simultaneous(c.name(), c.actions());
                 break;
+            case BLOCKING:
+                var axn = c.actions().getFirst();
+                this.blockingCue = c;
+                this.playingBlockingCue = true;
+                this.lastTriggeredBlockingCue = System.currentTimeMillis();
+                axn.activate(this::clearBlockingCue);
+
+                break;
         }
+    }
+
+    private void clearBlockingCue() {
+        this.blockingCue = null;
+        this.playingBlockingCue = false;
+        this.lastTriggeredBlockingCue = 0;
     }
 
     private void simultaneous(String owningCue, ActionList actions) {
