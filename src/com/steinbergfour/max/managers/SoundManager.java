@@ -14,6 +14,10 @@ public class SoundManager {
     }
 
     public boolean fire(String owningCue, AudioInputStream ais, Responder completed, boolean loop) {
+        return this.fire(owningCue, ais, completed, loop, 0);
+    }
+
+    public boolean fire(String owningCue, AudioInputStream ais, Responder completed, boolean loop, double percent) {
         final Clip clip;
         try {
             clip = AudioSystem.getClip();
@@ -28,7 +32,11 @@ public class SoundManager {
             // ignored
         }
 
+//        System.out.println(clip.getMicrosecondLength());
+        clip.setMicrosecondPosition((long) (percent * clip.getMicrosecondLength()));
         clip.start();
+//        clip.setMicrosecondPosition(position * 1000); // idk what the correct order is
+        System.out.println(clip.getMicrosecondPosition());
         if (loop) clip.loop(Clip.LOOP_CONTINUOUSLY);
 
         clip.addLineListener(event -> {
@@ -81,6 +89,7 @@ public class SoundManager {
 
     public void resumeMicroseconds(String cue, long pos) {
         // assumes its already been triggered
+        // i dont think this works
         for (var clip : this.clips.get(cue)) {
             clip.first().setMicrosecondPosition(pos);
         }

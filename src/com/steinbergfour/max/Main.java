@@ -206,7 +206,7 @@ public class Main {
 
                     playBar.setValue(newValue);
                     // doesnt work
-                    CueManager.singleton.getSoundManager().resume(CueManager.singleton.getCurrentBlockingCue().name(), newValue / 1000f);
+                    CueManager.singleton.seek(CueManager.singleton.getCurrentBlockingCue().name(), newValue / 1000f);
                 }
             });
 

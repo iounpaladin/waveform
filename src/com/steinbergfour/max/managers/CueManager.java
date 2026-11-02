@@ -11,6 +11,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
+import java.io.ByteArrayInputStream;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.function.Consumer;
@@ -104,7 +105,7 @@ public class CueManager {
 
     public void pause() {
         this.paused = !this.paused;
-        System.out.println(this.framePausedAt);
+//        System.out.println(this.framePausedAt);
         if (this.paused) {
             this.framePausedAt = this.getSoundManager().pause(this.blockingCue.name());
         } else {
@@ -119,6 +120,33 @@ public class CueManager {
 
     public boolean cacheInitialised() {
         return this.cache != null && !this.cache.isEmpty();
+    }
+
+    public void seek(String name, float v) { // assumes blocking cue
+        // update blocking position
+        this.getSoundManager().kill(name);
+        var axn = this.cueByName(name).actions().getFirst();
+        var target = ((PlayAction) axn).getTarget();
+        long len = this.cache.get(target).data.length;
+        this.getSoundManager().fire(
+                name,
+                new AudioInputStream(new ByteArrayInputStream(this.cache.get(target).data), targetFormat, len),
+                null,
+                false,
+                v
+        );
+//        this.getSoundManager().forceRestartAt(name);
+        this.lastTriggeredBlockingCue = System.currentTimeMillis() - (long)(v * len / (targetFormat.getFrameRate() * targetFormat.getFrameSize()) * 1000);
+    }
+
+    public Cue cueByName(String name) {
+        for (var cue : this.cueList.values()) {
+            if (cue.name().equals(name)) {
+                return cue;
+            }
+        }
+
+        return null;
     }
 
     public static record CachedData(byte[] data, AudioFormat fmt, long length) {
