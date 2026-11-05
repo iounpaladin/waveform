@@ -104,4 +104,8 @@ public class SoundManager {
 //            System.out.println(clip.first().getMicrosecondPosition());
 //        }
     }
+
+    public Clip getBlockingClip() {
+        return this.clips.get(CueManager.singleton.idByCue(CueManager.singleton.getCurrentBlockingCue())).getFirst().first();
+    }
 }

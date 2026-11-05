@@ -149,6 +149,16 @@ public class CueManager {
         return null;
     }
 
+    public String idByCue(Cue currentBlockingCue) {
+        for (var cue : this.cueList.keySet()) {
+            if (this.cueList.get(cue).equals(currentBlockingCue)) {
+                return cue;
+            }
+        }
+
+        return null;
+    }
+
     public static record CachedData(byte[] data, AudioFormat fmt, long length) {
 
     }

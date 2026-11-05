@@ -243,10 +243,16 @@ public class Main {
             var c = CueManager.singleton;
             long now = System.currentTimeMillis();
 
-            if (c.playingBlockingCue()) {
+            if (c.playingBlockingCue()) { // change this to just get microsecond position from clip
+                if (c.isPaused()) {
+                    System.out.println(c.getFramePausedAt());
+                }
                 long start = c.blockingCueStarted();
                 long elapsed = c.isPaused() ? c.getFramePausedAt() : now - start;
                 int thousands = (int)((elapsed / (double) c.blockingCueDuration()) * 1000);
+//                long pos = this.production.getBlockingClip().getMicrosecondPosition();
+//                long len = this.production.getBlockingClip().getMicrosecondLength();
+//                int thousands = (int) ((pos / (double) len) * 1000);
                 this.playBar.setValue(thousands);
             } else {
                 this.playBar.setValue(0);

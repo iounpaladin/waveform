@@ -6,6 +6,7 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.xml.sax.SAXException;
 
+import javax.sound.sampled.Clip;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -238,5 +239,9 @@ public class Production {
 
     private void setCompositionList(CompositionList compositionList) {
         this.compositionList = compositionList;
+    }
+
+    public Clip getBlockingClip() {
+        return this.cueManager.getSoundManager().getBlockingClip();
     }
 }
